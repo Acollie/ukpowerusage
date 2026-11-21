@@ -29,14 +29,14 @@ It uses free public data and needs no API key or server.
 
 | Setting | Options |
 |---------|---------|
-| Time window | 6h, 12h, 24h, 2 days, 3 days (the quadrant layout shows at most 12h) |
+| Time window | 6h, 12h, 24h, 2 days (the quadrant layout shows at most 12h) |
 | Header | Top 4 sources right now, or summary (GW now, peak, low-carbon %, gCO₂/kWh) |
 | Chart units | GW with a total line, or % share |
 | Show legend | Yes / No |
 
-| % share | 3 days + summary | Half-size layouts, 6h |
+| % share | 2 days + summary | Half-size layouts, 6h |
 |---|---|---|
-| ![](docs/percent.png) | ![](docs/3days.png) | ![](docs/mashup.png) |
+| ![](docs/percent.png) | ![](docs/2days.png) | ![](docs/mashup.png) |
 
 ## Data
 
@@ -44,7 +44,7 @@ It uses free public data and needs no API key or server.
 - [Sheffield Solar PV_Live](https://www.solar.sheffield.ac.uk/pvlive/): national solar output, which Elexon doesn't see because it's embedded in local distribution networks
 - [Carbon Intensity API](https://carbonintensity.org.uk/): gCO₂/kWh
 
-Elexon is requested in 26-hour chunks (one URL per chunk, up to three for the 3-day window). Below 24 hours Elexon switches to 5-minute rows, which pushed responses past TRMNL's 100 kB polling limit. Chunks of 24 hours or more come back half-hourly at about 40 kB each.
+Elexon is requested in 26-hour chunks (one URL per chunk, two for the 2-day window). Below 24 hours Elexon switches to 5-minute rows, which is too big. Chunks of 24 hours or more come back half-hourly at about 40 kB each. TRMNL caps the total of all polled responses at 100 kB, which is why 2 days (about 77 kB) is the longest window.
 
 PV_Live publishes up to an hour behind Elexon, so the chart ends at the latest half-hour that has a solar figure. Net exports on the interconnectors are drawn as zero imports.
 

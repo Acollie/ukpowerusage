@@ -20,7 +20,8 @@
 
   // Form field values (see settings.yml). Defaults apply when a field is unset.
   window.UKGRID_SETTINGS = {
-    hours: parseInt("{{ hours | default: 24 }}", 10) || 24,
+    // 48h max: TRMNL caps the sum of all polled responses at 100 kB (2 days is ~77 kB).
+    hours: Math.min(48, parseInt("{{ hours | default: 24 }}", 10) || 24),
     header: "{{ header | default: 'top' }}",
     units: "{{ units | default: 'gw' }}",
     // A Yes/No select is saved as a boolean (true/false) by TRMNL.

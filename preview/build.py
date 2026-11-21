@@ -32,7 +32,7 @@ def polling_urls(hours):
     """Python twin of src/polling_urls.liquid: Elexon in 26h chunks (always half-hourly)."""
     now = dt.datetime.now(dt.timezone.utc)
     f = lambda t: t.strftime("%Y-%m-%dT%H:00:00Z")
-    hrs = max(hours, 24)
+    hrs = min(max(hours, 24), 48)
     chunks = (hrs + 27) // 26
     future = now + dt.timedelta(days=1)
     step = dt.timedelta(hours=26)
@@ -67,7 +67,7 @@ def render(name, data, settings):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--hours", type=int, default=24, choices=[6, 12, 24, 48, 72])
+    ap.add_argument("--hours", type=int, default=24, choices=[6, 12, 24, 48])
     ap.add_argument("--header", default="top", choices=["top", "summary"])
     ap.add_argument("--units", default="gw", choices=["gw", "percent"])
     ap.add_argument("--legend", default="yes", choices=["yes", "no"])
@@ -78,10 +78,14 @@ def main():
                 "show_legend": "true" if a.legend == "yes" else "false"}
     urls = polling_urls(a.hours)
     data = [fetch(u) for u in urls]
+    total = 0
     for u, d in zip(urls, data):
-        size = len(json.dumps(d).encode())
+        size = len(json.dumps(d, separators=(",", ":")).encode())
+        total += size
         print(f"{size/1000:6.1f} kB  {u}")
-        assert size < 100_000, "TRMNL rejects polled payloads over 100 kB"
+    print(f"{total/1000:6.1f} kB  total")
+    # TRMNL sums every polled response and rejects the lot above 100 kB.
+    assert total < 100_000, "TRMNL rejects polled data over 100 kB in total"
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 

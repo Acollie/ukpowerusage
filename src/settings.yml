@@ -7,7 +7,7 @@
   description: >-
     Gas, wind, sunshine or a cable from France? A calm, stacked chart of where Great Britain's
     electricity is coming from (nuclear, wind, solar, bio/hydro, imports and gas), with a bold line
-    for total demand on top. Pick a window from 6 hours to 3 days, show the top sources or a summary,
+    for total demand on top. Pick a window from 6 hours to 2 days, show the top sources or a summary,
     and switch between GW and % share.<br><br>
     Free public data from Elexon, Sheffield Solar PV_Live and the Carbon Intensity API.
     No keys, no accounts.
@@ -20,7 +20,6 @@
   - 12 hours: 12
   - 24 hours: 24
   - 2 days: 48
-  - 3 days: 72
   default: 24
 - keyname: header
   field_type: select
@@ -39,9 +38,6 @@
   - "% share": percent
   default: gw
 - keyname: show_legend
-  field_type: select
+  field_type: boolean
   name: Show legend
-  options:
-  - "Yes"
-  - "No"
-  default: "yes"
+  default: true
