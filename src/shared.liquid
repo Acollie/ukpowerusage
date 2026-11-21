@@ -1,22 +1,30 @@
 <script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
 <script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-  // Polling URLs (in this order, see README):
-  //   IDX_0  Elexon generation outturn summary: half-hourly MW by fuel
-  //   IDX_1  Sheffield Solar PV_Live national solar MW (Elexon misses embedded solar)
-  //   IDX_2  Carbon Intensity API: current gCO2/kWh
-  window.UKGRID_RAW = {
-    elexon: {{ IDX_0 | json }},
-    solar: {{ IDX_1 | json }},
-    intensity: {{ IDX_2 | json }}
-  };
+  // Polling responses (see src/polling_urls.liquid). The number of Elexon chunks depends on
+  // the Time window setting, so responses are told apart by shape rather than by index.
+  window.UKGRID_IDX = [
+    {{ IDX_0 | json }}, {{ IDX_1 | json }}, {{ IDX_2 | json }},
+    {{ IDX_3 | json }}, {{ IDX_4 | json }}, {{ IDX_5 | json }}
+  ];
+  window.UKGRID_RAW = (function (list) {
+    var raw = { elexon: [], solar: [], intensity: null };
+    list.forEach(function (x) {
+      if (Array.isArray(x) && x.length && x[0].startTime) raw.elexon = raw.elexon.concat(x);
+      else if (x && Array.isArray(x.meta) && Array.isArray(x.data)) raw.solar = raw.solar.concat(x.data);
+      else if (x && Array.isArray(x.data) && x.data[0] && x.data[0].intensity) raw.intensity = x;
+      else if (x && Array.isArray(x.data) && x.data.length && x.data[0].startTime) raw.elexon = raw.elexon.concat(x.data);
+    });
+    return raw;
+  })(window.UKGRID_IDX);
 
   // Form field values (see settings.yml). Defaults apply when a field is unset.
   window.UKGRID_SETTINGS = {
     hours: parseInt("{{ hours | default: 24 }}", 10) || 24,
     header: "{{ header | default: 'top' }}",
     units: "{{ units | default: 'gw' }}",
-    legend: "{{ show_legend | default: 'yes' }}" !== "no"
+    // A Yes/No select is saved as a boolean (true/false) by TRMNL.
+    legend: ["no", "false"].indexOf("{{ show_legend | default: 'true' }}".toLowerCase()) === -1
   };
 
   (function () {
@@ -152,8 +160,10 @@
       var hours = opts.maxHours ? Math.min(opts.maxHours, S.hours) : S.hours;
       var percent = S.units === "percent";
       var d = parse(window.UKGRID_RAW || {});
-      var root = document.getElementById(opts.root);
-      if (!root) return;
+      var anchor = document.getElementById(opts.root);
+      if (!anchor) return;
+      // TRMNL wraps each layout in its own .view, so that is the root for this instance.
+      var root = anchor.closest(".view") || anchor.parentElement || anchor;
 
       showOnly(root, "data-ukgrid-header", S.header === "summary" ? "summary" : "top");
       root.querySelectorAll("[data-ukgrid-legend]").forEach(function (n) { if (!S.legend) n.style.display = "none"; });

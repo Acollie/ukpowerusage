@@ -29,15 +29,21 @@ PAGE = """<!doctype html>
 
 
 def polling_urls(hours):
-    """Python twin of src/polling_urls.liquid."""
+    """Python twin of src/polling_urls.liquid: Elexon in 26h chunks (always half-hourly)."""
     now = dt.datetime.now(dt.timezone.utc)
-    start = (now - dt.timedelta(hours=hours + 2)).strftime("%Y-%m-%dT%H:00:00Z")
-    end = (now + dt.timedelta(days=1)).strftime("%Y-%m-%dT%H:00:00Z")
-    return [
-        f"https://data.elexon.co.uk/bmrs/api/v1/generation/outturn/summary?startTime={start}",
-        f"https://api.pvlive.uk/pvlive/api/v4/gsp/0?start={start}&end={end}",
-        "https://api.carbonintensity.org.uk/intensity",
-    ]
+    f = lambda t: t.strftime("%Y-%m-%dT%H:00:00Z")
+    hrs = max(hours, 24)
+    chunks = (hrs + 27) // 26
+    future = now + dt.timedelta(days=1)
+    step = dt.timedelta(hours=26)
+    urls = []
+    for i in range(1, chunks + 1):
+        start = now - i * step
+        end = future if i == 1 else now - (i - 1) * step
+        urls.append(f"https://data.elexon.co.uk/bmrs/api/v1/generation/outturn/summary?startTime={f(start)}&endTime={f(end)}")
+    urls.append(f"https://api.pvlive.uk/pvlive/api/v4/gsp/0?start={f(now - dt.timedelta(hours=hrs + 2))}&end={f(future)}")
+    urls.append("https://api.carbonintensity.org.uk/intensity")
+    return urls
 
 
 def fetch(url):
@@ -48,7 +54,8 @@ def fetch(url):
 
 def render(name, data, settings):
     text = (SRC / f"{name}.liquid").read_text()
-    for i, payload in enumerate(data):
+    for i in range(6):
+        payload = data[i] if i < len(data) else None
         text = re.sub(r"\{\{\s*IDX_%d\s*\|\s*json\s*\}\}" % i, lambda _: json.dumps(payload), text)
 
     # {{ field | default: 'x' }} -> the chosen setting, or the default.
@@ -67,13 +74,24 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "preview" / "out"))
     a = ap.parse_args()
 
-    settings = {"hours": a.hours, "header": a.header, "units": a.units, "show_legend": a.legend}
-    data = [fetch(u) for u in polling_urls(a.hours)]
+    settings = {"hours": a.hours, "header": a.header, "units": a.units,
+                "show_legend": "true" if a.legend == "yes" else "false"}
+    urls = polling_urls(a.hours)
+    data = [fetch(u) for u in urls]
+    for u, d in zip(urls, data):
+        size = len(json.dumps(d).encode())
+        print(f"{size/1000:6.1f} kB  {u}")
+        assert size < 100_000, "TRMNL rejects polled payloads over 100 kB"
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    def r(name):
-        return render(name, data, settings)
+    VIEW = {"full": "full", "half_horizontal": "half_horizontal", "half_vertical": "half_vertical", "quadrant": "quadrant"}
+
+    def r(name, view=None):
+        html = render(name, data, settings)
+        if name in VIEW:
+            html = f'<div class="view view--{view or VIEW[name]}">{html}</div>'
+        return html
 
     shared = r("shared")
     (out / "full.html").write_text(PAGE.format(body=shared + r("full")))
@@ -85,7 +103,7 @@ def main():
     (out / "mashup_vertical.html").write_text(PAGE.format(
         body=shared + '<div class="mashup mashup--1Lx1R">'
         + r("half_vertical")
-        + r("quadrant").replace("view--quadrant", "view--half_vertical")
+        + r("quadrant", "half_vertical")
         + "</div>"))
     (out / "mashup_quadrants.html").write_text(PAGE.format(
         body=shared + '<div class="mashup mashup--2x2">'

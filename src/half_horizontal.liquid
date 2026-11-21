@@ -1,67 +1,65 @@
-<div class="view view--half_horizontal" id="ukgrid-hh">
-  <div class="layout layout--row gap--medium">
-    <div class="flex flex--col gap--xsmall w--40" data-ukgrid-header="top">
+<div class="layout layout--row gap--medium" id="ukgrid-hh">
+  <div class="flex flex--col gap--xsmall w--40 lg:w--60" data-ukgrid-header="top">
       <div class="item" data-ukgrid-top="0">
         <div class="meta"></div>
         <div class="content">
           <div class="flex flex--row gap--small flex--center-y">
-            <div class="w--5 h--5 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
-            <span class="value value--xsmall value--tnums" data-ukgrid="top-gw">--</span>
+            <div class="w--5 h--5 lg:w--10 lg:h--10 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
+            <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="top-gw">--</span>
           </div>
-          <span class="label"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
+          <span class="label lg:label--large"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
         </div>
       </div>
       <div class="item" data-ukgrid-top="1">
         <div class="meta"></div>
         <div class="content">
           <div class="flex flex--row gap--small flex--center-y">
-            <div class="w--5 h--5 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
-            <span class="value value--xsmall value--tnums" data-ukgrid="top-gw">--</span>
+            <div class="w--5 h--5 lg:w--10 lg:h--10 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
+            <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="top-gw">--</span>
           </div>
-          <span class="label"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
+          <span class="label lg:label--large"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
         </div>
       </div>
       <div class="item" data-ukgrid-top="2">
         <div class="meta"></div>
         <div class="content">
           <div class="flex flex--row gap--small flex--center-y">
-            <div class="w--5 h--5 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
-            <span class="value value--xsmall value--tnums" data-ukgrid="top-gw">--</span>
+            <div class="w--5 h--5 lg:w--10 lg:h--10 rounded--small" style="outline:2px solid #000;outline-offset:-2px" data-swatch></div>
+            <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="top-gw">--</span>
           </div>
-          <span class="label"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
+          <span class="label lg:label--large"><span data-ukgrid="top-name"></span>&nbsp;·&nbsp;<span data-ukgrid="top-pct"></span></span>
         </div>
       </div>
-    </div>
-    <div class="flex flex--col gap--xsmall w--40" data-ukgrid-header="summary">
-      <div class="item">
-        <div class="meta"></div>
-        <div class="content">
-          <span class="value value--xsmall value--tnums" data-ukgrid="now">--</span>
-          <span class="label">GW now</span>
-        </div>
-      </div>
-      <div class="item">
-        <div class="meta"></div>
-        <div class="content">
-          <span class="value value--xsmall value--tnums" data-ukgrid="low">--</span>
-          <span class="label">Low carbon</span>
-        </div>
-      </div>
-      <div class="item">
-        <div class="meta"></div>
-        <div class="content">
-          <span class="value value--xsmall value--tnums" data-ukgrid="intensity">--</span>
-          <span class="label">gCO₂/kWh</span>
-        </div>
-      </div>
-    </div>
-    <div id="ukgrid-chart-hh" class="grow"></div>
   </div>
-  <div class="title_bar">
-    <span class="title">UK Grid · <span data-ukgrid="unit">GW</span> · <span data-ukgrid="window">last 24h</span></span>
-    <span class="instance"><span data-ukgrid="now"></span> GW now · <span data-ukgrid="updated"></span></span>
+  <div class="flex flex--col gap--xsmall w--40 lg:w--60" data-ukgrid-header="summary">
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="now">--</span>
+          <span class="label lg:label--large">GW now</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="low">--</span>
+          <span class="label lg:label--large">Low carbon</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--xsmall lg:value--large value--tnums" data-ukgrid="intensity">--</span>
+          <span class="label lg:label--large">gCO₂/kWh</span>
+        </div>
+      </div>
   </div>
+  <div id="ukgrid-chart-hh" class="grow h--full"></div>
+</div>
+<div class="title_bar">
+  <span class="title">UK Grid · <span data-ukgrid="unit">GW</span> · <span data-ukgrid="window">last 24h</span></span>
+  <span class="instance"><span data-ukgrid="now"></span> GW now · <span data-ukgrid="updated"></span></span>
 </div>
 <script type="text/javascript">
-  ukgridRender({ root: "ukgrid-hh", chart: "ukgrid-chart-hh", height: 170 });
+  ukgridRender({ root: "ukgrid-hh", chart: "ukgrid-chart-hh", height: null });
 </script>

@@ -44,6 +44,8 @@ It uses free public data and needs no API key or server.
 - [Sheffield Solar PV_Live](https://www.solar.sheffield.ac.uk/pvlive/): national solar output, which Elexon doesn't see because it's embedded in local distribution networks
 - [Carbon Intensity API](https://carbonintensity.org.uk/): gCO₂/kWh
 
+Elexon is requested in 26-hour chunks (one URL per chunk, up to three for the 3-day window). Below 24 hours Elexon switches to 5-minute rows, which pushed responses past TRMNL's 100 kB polling limit. Chunks of 24 hours or more come back half-hourly at about 40 kB each.
+
 PV_Live publishes up to an hour behind Elexon, so the chart ends at the latest half-hour that has a solar figure. Net exports on the interconnectors are drawn as zero imports.
 
 ## Local preview

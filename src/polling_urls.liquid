@@ -1,4 +1,4 @@
-{% assign back = hours | default: 24 | times: 3600 | plus: 7200 %}{% assign start = "now" | date: "%s" | minus: back | date: "%Y-%m-%dT%H:00:00Z" %}{% assign end = "now" | date: "%s" | plus: 86400 | date: "%Y-%m-%dT%H:00:00Z" %}
-https://data.elexon.co.uk/bmrs/api/v1/generation/outturn/summary?startTime={{ start }}
-https://api.pvlive.uk/pvlive/api/v4/gsp/0?start={{ start }}&end={{ end }}
+{% assign hrs = hours | default: 24 | plus: 0 %}{% if hrs < 24 %}{% assign hrs = 24 %}{% endif %}{% assign chunks = hrs | plus: 27 | divided_by: 26 %}{% assign now_s = "now" | date: "%s" | plus: 0 %}{% assign pv_start = hrs | plus: 2 | times: 3600 | minus: now_s | times: -1 | date: "%Y-%m-%dT%H:00:00Z" %}{% assign future = now_s | plus: 86400 | date: "%Y-%m-%dT%H:00:00Z" %}
+{% for i in (1..chunks) %}{% assign start = i | times: 93600 | minus: now_s | times: -1 | date: "%Y-%m-%dT%H:00:00Z" %}{% if i == 1 %}{% assign end = future %}{% else %}{% assign end = i | minus: 1 | times: 93600 | minus: now_s | times: -1 | date: "%Y-%m-%dT%H:00:00Z" %}{% endif %}https://data.elexon.co.uk/bmrs/api/v1/generation/outturn/summary?startTime={{ start }}&endTime={{ end }}
+{% endfor %}https://api.pvlive.uk/pvlive/api/v4/gsp/0?start={{ pv_start }}&end={{ future }}
 https://api.carbonintensity.org.uk/intensity
