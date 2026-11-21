@@ -58,6 +58,16 @@ def render(name, data, settings):
         payload = data[i] if i < len(data) else None
         text = re.sub(r"\{\{\s*IDX_%d\s*\|\s*json\s*\}\}" % i, lambda _: json.dumps(payload), text)
 
+    # {% assign x = "prefix" | append_random %} -> fixed random suffix, then {{ x }} -> that value.
+    import random, string
+    ids = {}
+    def assign(m):
+        ids[m.group(1)] = m.group(2) + "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+        return ""
+    text = re.sub(r'\{%\s*assign\s+(\w+)\s*=\s*"([^"]*)"\s*\|\s*append_random\s*%\}\n?', assign, text)
+    for k, v in ids.items():
+        text = re.sub(r"\{\{\s*%s\s*\}\}" % k, v, text)
+
     # {{ field | default: 'x' }} -> the chosen setting, or the default.
     def field(m):
         return str(settings.get(m.group(1)) or m.group(2))

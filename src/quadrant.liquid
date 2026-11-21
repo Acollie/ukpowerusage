@@ -1,10 +1,11 @@
-<div class="layout layout--col" id="ukgrid-q">
-  <div id="ukgrid-chart-q" class="w--full grow"></div>
+{% assign root_id = "ukgrid-q-" | append_random %}{% assign chart_id = "ukgrid-chart-q-" | append_random %}
+<div class="layout layout--col" id="{{ root_id }}">
+  <div id="{{ chart_id }}" class="w--full grow"></div>
 </div>
 <div class="title_bar">
   <span class="title">UK Grid · <span data-ukgrid="window">last 12h</span></span>
   <span class="instance"><span data-ukgrid="now"></span> GW</span>
 </div>
 <script type="text/javascript">
-  ukgridRender({ root: "ukgrid-q", chart: "ukgrid-chart-q", height: null, maxHours: 12 });
+  ukgridRender({ root: "{{ root_id }}", chart: "{{ chart_id }}", height: null, maxHours: 12 });
 </script>
