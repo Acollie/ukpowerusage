@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">
+  <!-- 1-bit on purpose: e-ink friendly, no greys. -->
+  <defs>
+    <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="4" height="4" fill="#fff"/>
+      <rect width="2" height="4" fill="#000"/>
+    </pattern>
+    <pattern id="dots" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="#fff"/>
+      <rect width="2" height="2" fill="#000"/>
+    </pattern>
+    <clipPath id="frame"><rect x="4" y="4" width="56" height="56" rx="10"/></clipPath>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="#fff"/>
+  <g clip-path="url(#frame)">
+    <!-- stacked generation bands, bottom to top: nuclear (solid), wind (hatch), gas (dots) -->
+    <path d="M4 60 V30 C14 24 22 34 32 28 S50 22 60 26 V60 Z" fill="url(#dots)"/>
+    <path d="M4 60 V40 C14 36 22 44 32 39 S50 34 60 37 V60 Z" fill="url(#hatch)"/>
+    <path d="M4 60 V50 C16 48 24 52 34 49 S52 47 60 48 V60 Z" fill="#000"/>
+    <!-- total demand line -->
+    <path d="M4 30 C14 24 22 34 32 28 S50 22 60 26" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- bolt, with a white keyline so it reads over the bands -->
+  <path d="M36 11 L21 33 H30 L26 51 L43 25 H33 L38 11 Z" fill="#000" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke"/>
+
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="none" stroke="#000" stroke-width="3.5"/>
+</svg>

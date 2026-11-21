@@ -1,4 +1,6 @@
-# UK Power Usage for TRMNL
+<img src="assets/icon.png" width="72" align="right" alt="">
+
+# What's Powering Britain
 
 A [TRMNL](https://trmnl.com) private plugin that charts Great Britain's electricity generation by source: gas, imports, bio/hydro, solar, wind and nuclear. It's a stacked area chart with a line for total demand on top.
 

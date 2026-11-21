@@ -1,3 +1,4 @@
 preview/out/
 __pycache__/
 .DS_Store
+.gstack/
