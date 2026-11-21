@@ -1,0 +1,4 @@
+{% assign back = hours | default: 24 | times: 3600 | plus: 7200 %}{% assign start = "now" | date: "%s" | minus: back | date: "%Y-%m-%dT%H:00:00Z" %}{% assign end = "now" | date: "%s" | plus: 86400 | date: "%Y-%m-%dT%H:00:00Z" %}
+https://data.elexon.co.uk/bmrs/api/v1/generation/outturn/summary?startTime={{ start }}
+https://api.pvlive.uk/pvlive/api/v4/gsp/0?start={{ start }}&end={{ end }}
+https://api.carbonintensity.org.uk/intensity

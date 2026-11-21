@@ -1,0 +1,265 @@
+<script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
+<script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
+<script type="text/javascript">
+  // Polling URLs (in this order, see README):
+  //   IDX_0  Elexon generation outturn summary: half-hourly MW by fuel
+  //   IDX_1  Sheffield Solar PV_Live national solar MW (Elexon misses embedded solar)
+  //   IDX_2  Carbon Intensity API: current gCO2/kWh
+  window.UKGRID_RAW = {
+    elexon: {{ IDX_0 | json }},
+    solar: {{ IDX_1 | json }},
+    intensity: {{ IDX_2 | json }}
+  };
+
+  // Form field values (see settings.yml). Defaults apply when a field is unset.
+  window.UKGRID_SETTINGS = {
+    hours: parseInt("{{ hours | default: 24 }}", 10) || 24,
+    header: "{{ header | default: 'top' }}",
+    units: "{{ units | default: 'gw' }}",
+    legend: "{{ show_legend | default: 'yes' }}" !== "no"
+  };
+
+  (function () {
+    var HALF_HOUR = 30 * 60 * 1000;
+
+    // Stack order: first entry is drawn at the bottom.
+    var GROUPS = [
+      { key: "nuclear", name: "Nuclear", low: true },
+      { key: "wind", name: "Wind", low: true },
+      { key: "solar", name: "Solar", low: true },
+      { key: "other", name: "Bio/Hydro", low: true },
+      { key: "imports", name: "Imports", low: false },
+      { key: "gas", name: "Gas", low: false }
+    ];
+
+    function groupFor(fuel) {
+      if (fuel === "NUCLEAR") return "nuclear";
+      if (fuel === "WIND") return "wind";
+      if (fuel === "CCGT" || fuel === "OCGT" || fuel === "OIL" || fuel === "COAL") return "gas";
+      if (fuel.indexOf("INT") === 0) return "imports";
+      return "other"; // BIOMASS, NPSHYD, PS, OTHER
+    }
+
+    function asArray(x) {
+      if (Array.isArray(x)) return x;
+      if (x && Array.isArray(x.data)) return x.data;
+      return [];
+    }
+
+    function parse(raw) {
+      // Solar: PV_Live rows are [gsp_id, period_end_iso, mw]; key them by period start.
+      var solarByStart = {};
+      asArray(raw.solar).forEach(function (r) {
+        var t = Date.parse(r[1]);
+        if (!isNaN(t)) solarByStart[t - HALF_HOUR] = Math.max(0, r[2] || 0);
+      });
+
+      // Elexon returns 5-minute rows for short windows and half-hourly rows for long ones.
+      // Average everything into half-hour buckets so it lines up with the solar data.
+      var buckets = {};
+      asArray(raw.elexon).forEach(function (p) {
+        var t0 = Date.parse(p.startTime);
+        if (isNaN(t0)) return;
+        var t = Math.floor(t0 / HALF_HOUR) * HALF_HOUR;
+        var b = buckets[t] || (buckets[t] = { t: t, n: 0, sums: {} });
+        b.n += 1;
+        (p.data || []).forEach(function (f) {
+          var k = groupFor(f.fuelType);
+          b.sums[k] = (b.sums[k] || 0) + (f.generation || 0);
+        });
+      });
+
+      var points = Object.keys(buckets).map(function (key) {
+        var b = buckets[key], t = b.t;
+        var g = { nuclear: 0, wind: 0, solar: 0, other: 0, imports: 0, gas: 0 };
+        Object.keys(b.sums).forEach(function (k) { g[k] = b.sums[k] / b.n; });
+        g.imports = Math.max(0, g.imports); // net exports drawn as zero
+        g.other = Math.max(0, g.other);     // pumping can make storage negative
+        g.hasSolar = solarByStart.hasOwnProperty(t);
+        g.solar = solarByStart[t] || 0;
+        g.t = t;
+        g.total = GROUPS.reduce(function (s, gr) { return s + g[gr.key]; }, 0);
+        return g;
+      }).filter(function (g) { return !isNaN(g.t); })
+        .sort(function (a, b) { return a.t - b.t; });
+
+      // PV_Live lags Elexon by up to an hour: drop trailing half-hours without a solar figure
+      // so the total line doesn't fall off a cliff at the right-hand edge.
+      if (points.some(function (p) { return p.hasSolar; })) {
+        while (points.length && !points[points.length - 1].hasSolar) points.pop();
+      }
+
+      var intensity = asArray(raw.intensity)[0];
+      intensity = intensity && intensity.intensity;
+
+      var now = points[points.length - 1];
+      var peak = points.reduce(function (m, p) { return p.total > m.total ? p : m; }, { total: 0 });
+      var low = now ? GROUPS.reduce(function (s, gr) { return s + (gr.low ? now[gr.key] : 0); }, 0) : 0;
+
+      return {
+        points: points,
+        now: now,
+        peak: peak,
+        lowPct: now && now.total ? (low / now.total) * 100 : null,
+        intensity: intensity ? (intensity.actual != null ? intensity.actual : intensity.forecast) : null
+      };
+    }
+
+    function ukTime(ms) {
+      try {
+        return new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+      } catch (e) {
+        return new Date(ms).toISOString().slice(11, 16);
+      }
+    }
+
+    function gw(mw) { return (mw / 1000).toFixed(1); }
+
+    function setText(root, key, text) {
+      root.querySelectorAll('[data-ukgrid="' + key + '"]').forEach(function (n) { n.textContent = text; });
+    }
+
+    function whenReady(cb) {
+      var tries = 0;
+      (function attempt() {
+        if (window.TRMNLCharts && window.TRMNLPaint && window.Highcharts) return cb();
+        if (++tries > 200) return;
+        setTimeout(attempt, 50);
+      })();
+    }
+
+    function windowLabel(h) {
+      return h % 24 === 0 && h > 24 ? "last " + (h / 24) + " days" : "last " + h + "h";
+    }
+
+    function axisFor(h) {
+      if (h <= 6) return { tick: 1, fmt: "{value:%H:%M}" };
+      if (h <= 12) return { tick: 3, fmt: "{value:%H:%M}" };
+      if (h <= 24) return { tick: 6, fmt: "{value:%H:%M}" };
+      if (h <= 48) return { tick: 12, fmt: "{value:%a %H:%M}" };
+      return { tick: 24, fmt: "{value:%a}" };
+    }
+
+    function showOnly(root, attr, value) {
+      root.querySelectorAll("[" + attr + "]").forEach(function (n) {
+        n.style.display = n.getAttribute(attr) === value ? "" : "none";
+      });
+    }
+
+    // opts: { root, chart, height (px or null to fill), maxHours (cap for small layouts), axis (bool) }
+    window.ukgridRender = function (opts) {
+      var S = window.UKGRID_SETTINGS || { hours: 24, header: "top", units: "gw", legend: true };
+      var hours = opts.maxHours ? Math.min(opts.maxHours, S.hours) : S.hours;
+      var percent = S.units === "percent";
+      var d = parse(window.UKGRID_RAW || {});
+      var root = document.getElementById(opts.root);
+      if (!root) return;
+
+      showOnly(root, "data-ukgrid-header", S.header === "summary" ? "summary" : "top");
+      root.querySelectorAll("[data-ukgrid-legend]").forEach(function (n) { if (!S.legend) n.style.display = "none"; });
+      setText(root, "window", windowLabel(hours));
+      setText(root, "unit", percent ? "% share" : "GW");
+
+      var points = d.points;
+      if (points.length) {
+        var cutoff = points[points.length - 1].t - hours * 3600 * 1000;
+        points = points.filter(function (p) { return p.t >= cutoff; });
+      }
+      var peak = points.reduce(function (m, p) { return p.total > m.total ? p : m; }, { total: 0 });
+
+      if (d.now) {
+        setText(root, "now", gw(d.now.total));
+        setText(root, "peak", gw(peak.total));
+        setText(root, "peak-time", "Peak GW · " + ukTime(peak.t));
+        setText(root, "updated", ukTime(d.now.t + HALF_HOUR));
+      }
+      setText(root, "low", d.lowPct != null ? Math.round(d.lowPct) + "%" : "--");
+      setText(root, "intensity", d.intensity != null ? String(d.intensity) : "--");
+
+      // Largest sources right now. Each slot's swatch is re-pointed at that source's
+      // series so applySwatches() paints it with the same pattern as the chart.
+      if (d.now) {
+        var ranked = GROUPS.map(function (gr, i) { return { i: i, name: gr.name, mw: d.now[gr.key] }; })
+          .sort(function (a, b) { return b.mw - a.mw; });
+        root.querySelectorAll("[data-ukgrid-top]").forEach(function (slot) {
+          var r = ranked[+slot.getAttribute("data-ukgrid-top")];
+          if (!r) return;
+          var sw = slot.querySelector("[data-swatch]");
+          if (sw) {
+            sw.setAttribute("data-chart-series", String(r.i));
+            sw.setAttribute("data-chart-series-count", String(GROUPS.length));
+          }
+          setText(slot, "top-gw", gw(r.mw));
+          setText(slot, "top-name", r.name);
+          setText(slot, "top-pct", Math.round((r.mw / d.now.total) * 100) + "%");
+        });
+      }
+
+      if (!points.length) {
+        setText(root, "empty", "No data yet");
+        return;
+      }
+
+      whenReady(function () {
+        var el = opts.chart;
+        var axis = axisFor(hours);
+        TRMNLCharts.watch(el, function () {
+          var px = function (v) { return TRMNLPaint.px(v, { el: el }); };
+          var n = GROUPS.length;
+          var series = GROUPS.map(function (gr, i) {
+            return {
+              type: "area",
+              name: gr.name,
+              stacking: percent ? "percent" : "normal",
+              index: n - i,
+              legendIndex: i,
+              color: TRMNLCharts.series(i, n, { el: el }),
+              lineWidth: 0,
+              data: points.map(function (p) { return [p.t, p[gr.key] / 1000]; })
+            };
+          });
+          if (!percent) {
+            series.push({
+              type: "line",
+              name: "Total",
+              color: "#000000",
+              lineWidth: px(3),
+              zIndex: 10,
+              data: points.map(function (p) { return [p.t, p.total / 1000]; })
+            });
+          }
+
+          var chart = Highcharts.chart(el, TRMNLCharts.merge(TRMNLCharts.options({ el: el }), {
+            chart: { height: opts.height == null ? null : px(opts.height), spacing: px([14, 4, 2, 10]), animation: false },
+            time: { timezone: "Europe/London" },
+            legend: { enabled: false },
+            tooltip: { enabled: false },
+            plotOptions: {
+              series: { animation: false, marker: { enabled: false }, states: { hover: { enabled: false } }, enableMouseTracking: false },
+              area: { fillOpacity: 1 }
+            },
+            series: series,
+            xAxis: {
+              type: "datetime",
+              lineWidth: 0,
+              tickLength: 0,
+              tickInterval: axis.tick * 3600 * 1000,
+              labels: { enabled: opts.axis !== false, format: axis.fmt, style: TRMNLCharts.textStyle("chart-label", { el: el }) }
+            },
+            yAxis: {
+              min: 0,
+              max: percent ? 100 : undefined,
+              title: { text: null },
+              tickAmount: percent ? undefined : 4,
+              tickInterval: percent ? 25 : undefined,
+              gridLineDashStyle: "shortdot",
+              labels: { enabled: opts.axis !== false, format: percent ? "{value}%" : "{value}", style: TRMNLCharts.textStyle("chart-label", { el: el }) }
+            }
+          }));
+          TRMNLCharts.applySwatches({ el: root });
+          return chart;
+        });
+      });
+    };
+  })();
+</script>

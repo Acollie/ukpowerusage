@@ -1,0 +1,12 @@
+<div class="view view--quadrant" id="ukgrid-q">
+  <div class="layout layout--col">
+    <div id="ukgrid-chart-q" class="w--full grow"></div>
+  </div>
+  <div class="title_bar">
+    <span class="title">UK Grid · <span data-ukgrid="window">last 12h</span></span>
+    <span class="instance"><span data-ukgrid="now"></span> GW</span>
+  </div>
+</div>
+<script type="text/javascript">
+  ukgridRender({ root: "ukgrid-q", chart: "ukgrid-chart-q", height: 160, maxHours: 12 });
+</script>

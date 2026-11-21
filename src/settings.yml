@@ -1,0 +1,35 @@
+# Paste everything below into the plugin's "Form Fields" box on trmnl.com.
+- keyname: hours
+  field_type: select
+  name: Time window
+  description: How far back the chart looks. The quadrant layout shows at most 12 hours.
+  options:
+  - 6 hours: 6
+  - 12 hours: 12
+  - 24 hours: 24
+  - 2 days: 48
+  - 3 days: 72
+  default: 24
+- keyname: header
+  field_type: select
+  name: Header
+  description: What to show above the chart.
+  options:
+  - Top sources right now: top
+  - Summary (GW now, peak, low carbon, carbon intensity): summary
+  default: top
+- keyname: units
+  field_type: select
+  name: Chart units
+  description: GW stacks absolute generation with a total line. % share shows each source's share of the mix.
+  options:
+  - GW: gw
+  - "% share": percent
+  default: gw
+- keyname: show_legend
+  field_type: select
+  name: Show legend
+  options:
+  - "Yes"
+  - "No"
+  default: "yes"
