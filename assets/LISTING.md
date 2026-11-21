@@ -13,4 +13,6 @@ A calm, stacked chart of Great Britain's electricity by source: nuclear, wind, s
 - GW or % share, legend on or off
 - Free public data (Elexon, Sheffield Solar PV_Live, Carbon Intensity API). No keys, no accounts.
 
+**Categories:** `environment`, `analytics` (set in the `author_bio` field in `src/settings.yml`)
+
 **Icon:** `assets/icon.png` (512×512, 1-bit), source `assets/icon.svg`

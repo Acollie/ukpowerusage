@@ -1,4 +1,16 @@
 # Paste everything below into the plugin's "Form Fields" box on trmnl.com.
+- keyname: about
+  field_type: author_bio
+  name: About This Plugin
+  category: environment,analytics
+  github_url: https://github.com/Acollie/ukpowerusage
+  description: >-
+    Gas, wind, sunshine or a cable from France? A calm, stacked chart of where Great Britain's
+    electricity is coming from (nuclear, wind, solar, bio/hydro, imports and gas), with a bold line
+    for total demand on top. Pick a window from 6 hours to 3 days, show the top sources or a summary,
+    and switch between GW and % share.<br><br>
+    Free public data from Elexon, Sheffield Solar PV_Live and the Carbon Intensity API.
+    No keys, no accounts.
 - keyname: hours
   field_type: select
   name: Time window
